@@ -15,27 +15,24 @@ jobs:
       #----------------------------------------------------------------------
       - task: NodeTool@0
         inputs:
-          versionSpec: '12.16.1'
+          versionSpec: $(NODE_VERSION)
         displayName: 'TOOLS: install Node.js'
-      - script: sudo npm install -g npm
-        displayName: 'TOOLS: update NPM'
-      - script: sudo chown -R vsts:docker /home/vsts/.npm/
-        displayName: 'BUGS-FIX: change /home/vsts/.npm/ permission'
-      - script: sudo /etc/init.d/mysql stop
-        displayName: 'TOOLS: stop MySQL'
       #----------------------------------------------------------------------
       # Tests
       #----------------------------------------------------------------------
-      - script: npm install
+      - task: Npm@1
+        inputs:
+          command: 'install'
         displayName: 'INSTALL: launch npm install'
       - script: |
           chmod +x mvnw
           ./mvnw -ntp checkstyle:check
           ./mvnw -ntp clean verify -P-webpack
         displayName: 'TESTS: backend'
-      - script: ./mvnw -ntp -P-webpack com.github.eirslett:frontend-maven-plugin:npm -Dfrontend.npm.arguments='run test'
+      - task: Npm@1
+        inputs:
+          command: 'custom'
+          customCommand: 'run test'
         displayName: 'TESTS: frontend'
-      - script: npm install
-      - script: npm test
       - script: ./mvnw -ntp verify -Pprod -DskipTests
         displayName: 'TESTS: packaging'
